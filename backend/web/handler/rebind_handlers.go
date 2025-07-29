@@ -40,12 +40,12 @@ func RebindGen(c *gin.Context) {
 	// 生成Rebind域名
 	rebindDomain := fmt.Sprintf("%s.e.%s", hash, dnsDomain)
 
-	// 检查是否存在相同的哈希值
-	var existingRebind models.Rebind
-	if err := database.DB.Where("hash = ? AND user_id = ?", hash, userID).First(&existingRebind).Error; err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Hash already exists"})
-		return
-	}
+	// // 检查是否存在相同的哈希值
+	// var existingRebind models.Rebind
+	// if err := database.DB.Where("hash = ? AND user_id = ?", hash, userID).First(&existingRebind).Error; err == nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Hash already exists"})
+	// 	return
+	// }
 
 	// 保存到数据库
 	rebind := models.Rebind{

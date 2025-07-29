@@ -3,7 +3,8 @@ package database
 import (
 	"fmt"
 	"log"
-
+	"os"
+	"path/filepath"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -24,10 +25,42 @@ func Init() error {
 
 	// 根据驱动类型初始化数据库连接
 	var err error
+
+	logEnable := viper.GetBool("log.enable")
+
+	var customLogger logger.Interface
+
+	if logEnable {
+			// 获取日志路径配置
+	logPath := viper.GetString("log.path")
+	if logPath == "" {
+		logPath = "logs/"
+	}
+
+	// 创建日志目录
+	if mkdirErr := os.MkdirAll(logPath, 0755); mkdirErr != nil {
+		log.Fatalf("Failed to create log directory: %v", err)
+	}
+
+	// 打开数据库日志文件
+	logFile, err := os.OpenFile(filepath.Join(logPath, "db.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+
+	customLogger = logger.New(log.New(logFile, "", log.LstdFlags), logger.Config{
+		LogLevel: logger.Info,
+		Colorful: false,
+	})
+
+	} else {
+		customLogger = logger.Default.LogMode(logger.Info)
+	}
+
 	switch driver {
 	case "mysql":
 		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Info),
+			Logger: customLogger,	// 使用自定义日志器
 		})
 	default:
 		return fmt.Errorf("unsupported database driver: %s", driver)

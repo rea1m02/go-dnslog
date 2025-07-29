@@ -22,5 +22,5 @@ security:
   password_salt: "@dnslog"
 
 log:
-  level: info
+  enable: true
   path: logs/

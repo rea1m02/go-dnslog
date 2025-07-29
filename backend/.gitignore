@@ -3,3 +3,6 @@ go-dnslog-linux-arm64
 .dockerignore
 Dockerfile
 .DS_Store
+app_linux
+go-dnslog
+logs
