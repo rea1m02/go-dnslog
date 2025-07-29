@@ -1,0 +1,5 @@
+go-dnslog-linux-amd64
+go-dnslog-linux-arm64
+.dockerignore
+Dockerfile
+.DS_Store

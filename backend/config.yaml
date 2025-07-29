@@ -1,0 +1,26 @@
+app:
+  name: go-dnslog
+  port: 8080
+  mode: debug
+
+database:
+  driver: mysql
+  dsn: dnslog:your_password@tcp(localhost:3306)/dnslog?charset=utf8mb4&parseTime=True&loc=Local
+  max_open_conns: 100
+  max_idle_conns: 20
+
+dns:
+  domain: dns.domain.xxx  
+  ns1: ns1.domain.xxx
+  ns2: ns2.domain.xxx
+  server_ip: your-server-ip
+  port: 53
+
+security:
+  jwt_secret: your-jwt-secret-key
+  token_expiry: 86400
+  password_salt: "@dnslog"
+
+log:
+  level: info
+  path: logs/
