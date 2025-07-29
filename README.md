@@ -7,18 +7,17 @@
 - ✅ DNS查询日志记录
 - ✅ DNS Rebind
 - ✅ 自定义域名与IP绑定
-
+- ✅ 支持日志导出
 
 ## 环境要求
-- 后端：go环境
-- 前端：node环境
+- 后端：golang
+- 前端：node+vue
 - 数据库：mysql
 - 端口：53（DNS）
 
-
 ## 部署指南
 
-目前项目仅支持手动部署(后续会进行优化，以实现docker部署)
+目前项目仅支持手动部署
 
 1. 后端部署
 + 有go环境
@@ -64,6 +63,52 @@ dns:
     server_ip: 127.0.0.1
     port: 53
 ```
+### 后端服务配置
+```service
+[Unit]
+Description=DNSLog Platform
+After=network.target mysql.service
+
+[Service]
+User=root
+WorkingDirectory=/your/path/backend/
+ExecStart=/your/path/go-dnslog
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+设置后台运行
+```bash
+systemctl daemon-reload
+
+# 假设服务文件名为 dnslog.service
+# 启动服务
+systemctl start dnslog.service
+
+# 开机自启
+systemctl enable dnslog.service
+```
+
+### nginx配置参考
+```conf
+	server {
+		listen 80;
+		server_name your-ip/your-domain;
+		root /your/path/frontend/dist;
+		index index.html;
+
+		location / {
+			try_files $uri $uri/ /index.html;
+		}
+		
+		location /api {
+			proxy_pass http://127.0.0.1:8081;  # 后端服务地址
+			proxy_set_header Host $host;
+		}
+	}
+```
+
 
 ## 测试
 正常情况下，在配置好之后，由于dns传播特性，需要24-48小时才能生效，所以可以通过在本地自行测试是否部署成功
