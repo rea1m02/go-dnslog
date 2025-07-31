@@ -23,9 +23,9 @@
 
 ## 部署指南
 
-目前项目仅支持手动部署
-
+### 手动编译部署
 1. 后端部署
+
 + 有go环境
 ```bash
 # 进入后端目录
@@ -46,6 +46,33 @@ GOOS=linux GOARCH=arm64 go build -o dnslog-linux-arm64
 + 无go环境
 直接下载对应release的二进制可执行文件
 
++ Docker部署
+
+构建镜像
+```bash
+cd backend
+# 构建镜像
+docker build -t go-dnslog:v0.0.1 .
+```
+
+运行镜像
+```bash
+cd go-dnslog
+
+docker-compose up -d
+```
+
+验证后端部署是否成功
+```bash
+dig @localhost dnslog.example.com
+
+# 显示如下即表示成功
+# ;; ANSWER SECTION:
+# your-domain.	300	IN	A	your-ip
+```
+
+
+
 2. 前端部署
 ```bash
 # 进入前端目录
@@ -58,6 +85,7 @@ npm install
 npm run build
 ## 编译完成后，将dist目录上传到服务器
 ```
+
 
 ## 配置说明
 核心配置文件    `backend/config.yaml`

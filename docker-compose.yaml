@@ -1,0 +1,39 @@
+version: '2'
+
+services:
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=your-password
+      - MYSQL_DATABASE=dnslog
+      - MYSQL_USER=dnslog
+      - MYSQL_PASSWORD=your-password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - go-dnslog
+    restart: unless-stopped
+    
+  backend:
+    container_name: backend
+    image: go-dnslog:v0.0.1
+    ports:
+      - "8080:8080"
+      - "53:53/udp"
+      - "53:53/tcp"
+    depends_on:
+      - mysql
+    volumes:
+      - /root/backend/config.yaml:/app/config.yaml
+    networks:
+      - go-dnslog
+    restart: unless-stopped
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  go-dnslog:
+    driver: bridge

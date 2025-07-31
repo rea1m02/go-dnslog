@@ -39,13 +39,13 @@ func Init() error {
 
 	// 创建日志目录
 	if mkdirErr := os.MkdirAll(logPath, 0755); mkdirErr != nil {
-		log.Fatalf("Failed to create log directory: %v", err)
+		log.Fatalf("Failed to create log directory: %v", mkdirErr)
 	}
 
 	// 打开数据库日志文件
-	logFile, err := os.OpenFile(filepath.Join(logPath, "db.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatalf("Failed to open log file: %v", err)
+	logFile, logErr := os.OpenFile(filepath.Join(logPath, "db.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if logErr != nil {
+		log.Fatalf("Failed to open log file: %v", logErr)
 	}
 
 	customLogger = logger.New(log.New(logFile, "", log.LstdFlags), logger.Config{

@@ -1,8 +1,7 @@
 go-dnslog-linux-amd64
 go-dnslog-linux-arm64
 .dockerignore
-Dockerfile
 .DS_Store
 app_linux
-go-dnslog
+go-dnslog*
 logs

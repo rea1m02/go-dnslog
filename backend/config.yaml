@@ -10,7 +10,7 @@ database:
   max_idle_conns: 20
 
 dns:
-  domain: dns.domain.xxx  
+  domain: dns-domain.xxx
   ns1: ns1.domain.xxx
   ns2: ns2.domain.xxx
   server_ip: your-server-ip
