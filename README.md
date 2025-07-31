@@ -8,10 +8,22 @@
 - ✅ DNS Rebind
 - ✅ 自定义域名与IP绑定
 - ✅ 支持日志导出
+- ✅ 支持后端Docker部署
 
+**UI界面**：
+
+DNS日志：
+
+![image-20250731111759395](https://rea1m-blog.oss-cn-shanghai.aliyuncs.com/blog/image-20250731111759395.png)
+
+DNS Rebind：
+
+![image-20250731111907717](https://rea1m-blog.oss-cn-shanghai.aliyuncs.com/blog/image-20250731111907717.png)
 
 ## 部署需求
-- 公网ip
+
+- 云服务器
+- 公网IP
 - 公网域名（无需备案，有条件可以准备2个）
 
 
@@ -71,8 +83,6 @@ dig @localhost dnslog.example.com
 # your-domain.	300	IN	A	your-ip
 ```
 
-
-
 2. 前端部署
 ```bash
 # 进入前端目录
@@ -91,13 +101,14 @@ npm run build
 核心配置文件    `backend/config.yaml`
 ```yaml
 dns:
-    domain: dnslog.example.com
+    domain: dns-example.com	# dns的域名
     ns1: ns1.dnslog.example.com
     ns2: ns2.dnslog.example.com
-    server_ip: 127.0.0.1
+    server_ip: 127.0.0.1	# DNS服务器的IP
     port: 53
 ```
 ### 后端服务配置
+> 如果是docker部署则不需要配置以下内容
 ```service
 [Unit]
 Description=DNSLog Platform
@@ -129,7 +140,7 @@ systemctl enable dnslog.service
 	server {
 		listen 80;
 		server_name your-ip/your-domain;
-		root /your/path/frontend/dist;
+		root /your/path/frontend/dist;   # 前端文件目录
 		index index.html;
 
 		location / {
@@ -137,7 +148,7 @@ systemctl enable dnslog.service
 		}
 		
 		location /api {
-			proxy_pass http://127.0.0.1:8081;  # 后端服务地址
+			proxy_pass http://127.0.0.1:8081;  # 后端服务地址，如果使用的docker部署，改为对应的 ip:port 即可
 			proxy_set_header Host $host;
 		}
 	}
@@ -154,5 +165,5 @@ dig @localhost dnslog.example.com
 
 ## 常见问题
 - **Q: 为什么DNS服务启动失败?**
-  A: 确保端口53未被系统DNS服务占用，可使用`lsof -i:53`检查，若存在53端口占用，在关闭对应的服务后，该系统可能存在无法正常解析域名的情况，需要在`/etc/resolv.conf`文件中添加`nameserver 8.8.8.8`
+  A: 确保端口53未被系统DNS服务占用，可使用`lsof -i:53`检查，若存在53端口占用，在关闭对应的服务后，该系统可能存在无法正常解析域名的情况，需要在`/etc/resolv.conf`文件中添加`nameserver 8.8.8.8`，或者任意一个DNS服务器
 
