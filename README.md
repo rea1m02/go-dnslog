@@ -167,3 +167,8 @@ dig @localhost dnslog.example.com
 - **Q: 为什么DNS服务启动失败?**
   A: 确保端口53未被系统DNS服务占用，可使用`lsof -i:53`检查，若存在53端口占用，在关闭对应的服务后，该系统可能存在无法正常解析域名的情况，需要在`/etc/resolv.conf`文件中添加`nameserver 8.8.8.8`，或者任意一个DNS服务器
 
+- **Q：添加删除过的rebind记录失败**
+	A：修改数据库结构
+	```mysql
+	alter table rebind drop index idx_domain_user;
+	```
