@@ -23,8 +23,7 @@ func ListDNSLogs(c *gin.Context) {
 		return
 	}
 
-	userID, _ := c.Get("userID")
-	db := database.DB.Model(&models.DNSLog{}).Where("user_id = ?", userID)
+	db := database.DB.Model(&models.DNSLog{})
 
 	if req.Search != "" {
 		escapedSearch := strings.ReplaceAll(req.Search, "%", "\\%")
@@ -55,7 +54,6 @@ func ListDNSLogs(c *gin.Context) {
 
 // DeleteDNSLogs 删除单个DNS日志
 func DeleteDNSLogs(c *gin.Context) {
-	userID, _ := c.Get("userID")
 	var req struct {
 		ID uint `json:"id"`
 	}
@@ -65,13 +63,13 @@ func DeleteDNSLogs(c *gin.Context) {
 		return
 	}
 
-	// 先查询记录是否存在且属于当前用户
+	// 先查询记录是否存在
 	var dnsLog models.DNSLog
-	result := database.DB.Where("id = ? AND user_id = ?", req.ID, userID).First(&dnsLog)
+	result := database.DB.Where("id = ?", req.ID).First(&dnsLog)
 
 	if result.RowsAffected == 0 {
-		// 记录不存在或不属于当前用户
-		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to delete this DNS log"})
+		// 记录不存在
+		c.JSON(http.StatusNotFound, gin.H{"error": "DNS log not found"})
 		return
 	}
 
@@ -82,10 +80,8 @@ func DeleteDNSLogs(c *gin.Context) {
 }
 
 func BatchDeleteDNSLogs(c *gin.Context) {
-	userID, _ := c.Get("userID")
-
 	// 删除所有日志
-	database.DB.Where("user_id = ?", userID).Delete(&models.DNSLog{})
+	database.DB.Where("1 = 1").Delete(&models.DNSLog{})
 
 	c.JSON(http.StatusOK, gin.H{"message": "DNS logs deleted successfully"})
 }

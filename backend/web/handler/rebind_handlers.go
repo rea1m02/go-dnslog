@@ -14,9 +14,8 @@ import (
 
 // RebindList
 func RebindList(c *gin.Context) {
-	userID, _ := c.Get("userID")
 	var rebindList []models.Rebind
-	database.DB.Where("user_id = ?", userID).Find(&rebindList)
+	database.DB.Find(&rebindList)
 	c.JSON(http.StatusOK, gin.H{"rebind_list": rebindList})
 }
 
@@ -42,7 +41,7 @@ func RebindGen(c *gin.Context) {
 
 	// 检查是否存在相同的哈希值
 	var existingRebind models.Rebind
-	if err := database.DB.Where("domain = ? AND user_id = ?", rebindDomain, userID).First(&existingRebind).Error; err == nil {
+	if err := database.DB.Where("domain = ?", rebindDomain).First(&existingRebind).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Domain already exists"})
 		return
 	}
@@ -59,12 +58,10 @@ func RebindGen(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"rebind_domain": rebindDomain})
+	c.JSON(http.StatusOK, gin.H{"rebind_domain": rebindDomain, "url": rebindDomain})
 }
 
 func RebindDelete(c *gin.Context) {
-	userID, _ := c.Get("userID")
-
 	var req struct {
 		ID uint `json:"id" binding:"required"`
 	}
@@ -75,7 +72,7 @@ func RebindDelete(c *gin.Context) {
 	}
 
 	var rebind models.Rebind
-	if err := database.DB.Where("id = ? AND user_id = ?", req.ID, userID).First(&rebind).Error; err != nil {
+	if err := database.DB.Where("id = ?", req.ID).First(&rebind).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Rebind record not found"})
 		return
 	}

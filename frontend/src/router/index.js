@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import Login from '../components/Login.vue';
-import Register from '../components/Register.vue';
 import DnsLogs from '../components/DnsLogs.vue';
 import Rebind from '../components/Rebind.vue';
 import Layout from '../components/Layout.vue';
@@ -9,7 +8,7 @@ import Layout from '../components/Layout.vue';
 const requireAuth = (to, from, next) => {
   console.log('Route guard triggered:', to.path);
   const token = localStorage.getItem('token');
-  if (!token && to.path !== '/login' && to.path !== '/register') {
+  if (!token && to.path !== '/login') {
     console.log('No token found, redirecting to login');
     next('/login');
   } else {
@@ -20,7 +19,6 @@ const requireAuth = (to, from, next) => {
 
 const routes = [
   { path: '/login', component: Login },
-  { path: '/register', component: Register },
   {
     path: '/',
     component: Layout,

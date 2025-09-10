@@ -59,8 +59,6 @@ func NewRouter() *gin.Engine {
 	public := router.Group("/api")
 	{
 		public.POST("/login", handler.Login)
-		public.POST("/register", handler.Register)
-		public.GET("/random_id_login", handler.RandomIDLogin)
 	}
 
 	// API路由

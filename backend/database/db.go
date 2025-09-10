@@ -1,6 +1,8 @@
 package database
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -89,11 +91,56 @@ func Init() error {
 
 // migrate 执行数据库迁移
 func migrate() error {
-	return DB.AutoMigrate(
+	if err := DB.AutoMigrate(
 		&models.User{},
 		&models.DNSLog{},
 		&models.Rebind{},
-	)
+	); err != nil {
+		return err
+	}
+
+	// 初始化默认管理员用户
+	return initDefaultUser()
+}
+
+// initDefaultUser 初始化默认管理员用户
+func initDefaultUser() error {
+	var userCount int64
+	if err := DB.Model(&models.User{}).Count(&userCount).Error; err != nil {
+		return err
+	}
+
+	// 如果没有用户，创建默认管理员
+	if userCount == 0 {
+		salt := viper.GetString("security.password_salt")
+		username := "admin"
+		password := "admin123"
+
+		// 密码加密
+		passwordHash := md5.Sum([]byte(password + username[:3] + salt))
+		passwordHex := hex.EncodeToString(passwordHash[:])
+
+		// 生成用户令牌
+		token := md5.Sum([]byte(passwordHex + username[:3] + salt))
+		tokenHex := hex.EncodeToString(token[:])[:8]
+
+		adminUser := models.User{
+			Username:   username,
+			Password:   passwordHex,
+			Email:      "admin@dnslog.local",
+			UserDomain: username,
+			Token:      tokenHex,
+			IsAdmin:    true,
+		}
+
+		if err := DB.Create(&adminUser).Error; err != nil {
+			return err
+		}
+
+		log.Println("Default admin user created: username=admin, password=admin123")
+	}
+
+	return nil
 }
 
 // Close 关闭数据库连接

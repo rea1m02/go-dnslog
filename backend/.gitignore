@@ -5,3 +5,4 @@ go-dnslog-linux-arm64
 app_linux
 go-dnslog*
 logs
+dnslog
