@@ -16,12 +16,14 @@ import (
 )
 
 var (
-	dnsDomain string
-	serverIP  string
-	ns1Domain string
-	ns2Domain string
-	logQueue  = make(chan *models.DNSLog, 1000)
-	wg        sync.WaitGroup
+	dnsDomain   string
+	serverIP    string
+	ns1Domain   string
+	ns2Domain   string
+	logQueue    = make(chan *models.DNSLog, 1000)
+	wg          sync.WaitGroup
+	watchDomains = make(map[string]bool)
+	watchDomainsMu sync.RWMutex
 )
 
 // Init 初始化DNS服务器配置
@@ -31,8 +33,51 @@ func Init() {
 	ns1Domain = viper.GetString("dns.ns1")
 	ns2Domain = viper.GetString("dns.ns2")
 
+	// 加载监听域名
+	RefreshWatchDomains()
+
 	// 启动日志处理协程
 	go processLogs()
+}
+
+// RefreshWatchDomains 刷新监听域名列表
+func RefreshWatchDomains() {
+	var domains []models.WatchDomain
+	database.DB.Find(&domains)
+
+	watchDomainsMu.Lock()
+	defer watchDomainsMu.Unlock()
+
+	watchDomains = make(map[string]bool)
+	for _, d := range domains {
+		watchDomains[d.Domain] = true
+	}
+	log.Printf("Refreshed watch domains, count: %d", len(watchDomains))
+}
+
+// isDomainWatched 检查域名是否在监听列表中
+func isDomainWatched(domain string) bool {
+	domain = strings.TrimSuffix(domain, ".")
+	domain = strings.ToLower(domain)
+
+	watchDomainsMu.RLock()
+	defer watchDomainsMu.RUnlock()
+
+	// 直接匹配
+	if watchDomains[domain] {
+		return true
+	}
+
+	// 检查子域名匹配（如 test.example.com 匹配 *.example.com）
+	parts := strings.Split(domain, ".")
+	for i := 1; i < len(parts)-1; i++ {
+		parentDomain := strings.Join(parts[i:], ".")
+		if watchDomains[parentDomain] {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Start 启动DNS服务器
@@ -219,20 +264,28 @@ func rebindIP(qName string) string {
 
 // logDNSQuery 将DNS查询记录添加到日志队列
 func logDNSQuery(userDomain, clientIP, host, queryType, subName string) {
-	// 查询用户
-	var user models.User
-	
-	if err := database.DB.Where("user_domain = ?", userDomain).First(&user).Error; err != nil {
-		log.Println("User not found for domain:", userDomain)
+	// 检查域名是否在监听列表中
+	cleanHost := strings.TrimSuffix(host, ".")
+	if !isDomainWatched(cleanHost) {
+		log.Printf("Domain %s not in watch list, skipping log", cleanHost)
 		return
 	}
 
-	host = strings.TrimSuffix(host, ".")
+	// 查询用户 - 优先使用匹配的用户，否则使用第一个用户（admin）
+	var user models.User
+
+	if err := database.DB.Where("user_domain = ?", userDomain).First(&user).Error; err != nil {
+		// 用户不存在，使用第一个用户（admin）
+		if err := database.DB.First(&user).Error; err != nil {
+			log.Println("No user found in database, skipping log")
+			return
+		}
+	}
 
 	// 创建DNS日志记录
 	dnsLog := &models.DNSLog{
 		UserID:  user.ID,
-		Host:    host,
+		Host:    cleanHost,
 		SubName: subName,
 		Type:    queryType,
 		IP:      clientIP,

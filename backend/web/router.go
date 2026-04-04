@@ -5,10 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/rea1m/go-dnslog/dns"
 	"github.com/rea1m/go-dnslog/web/handler"
 	"github.com/rea1m/go-dnslog/web/middleware"
 )
@@ -84,6 +86,18 @@ func NewRouter() *gin.Engine {
 		/// 删除指定的DNS Rebind记录
 		api.POST("/rebind/delete", handler.RebindDelete)
 
+		// 监听域名
+		/// 获取监听域名列表
+		api.GET("/watch_domains/list", handler.ListWatchDomains)
+		/// 添加监听域名
+		api.POST("/watch_domains/add", handler.AddWatchDomain)
+		/// 删除监听域名
+		api.POST("/watch_domains/delete", handler.DeleteWatchDomain)
+		/// 刷新监听域名（通知DNS服务器重新加载）
+		api.POST("/watch_domains/refresh", func(c *gin.Context) {
+			dns.RefreshWatchDomains()
+			c.JSON(http.StatusOK, gin.H{"message": "Watch domains refreshed"})
+		})
 	}
 
 	// 捕获所有未定义路由

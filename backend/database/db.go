@@ -95,6 +95,7 @@ func migrate() error {
 		&models.User{},
 		&models.DNSLog{},
 		&models.Rebind{},
+		&models.WatchDomain{},
 	); err != nil {
 		return err
 	}
